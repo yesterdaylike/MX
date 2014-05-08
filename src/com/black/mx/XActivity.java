@@ -31,10 +31,14 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.SimpleAdapter.ViewBinder;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class XActivity extends Activity {
 	private ListView mInstalledAppListView = null;
 	private PackageManager pm = null;
+	private String[] packageNames;
+	private String[] apkFiles;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -73,14 +77,14 @@ public class XActivity extends Activity {
 
 		protected Void doInBackground(Void... urls) {
 			File IntMemory_Path = new File("/mnt/sdcard");
-			File SDCard_Path = new File("/mnt/external_sd");
-			File USB_Path = new File("/mnt/usb_storage");
+			/*File SDCard_Path = new File("/mnt/external_sd");
+			File USB_Path = new File("/mnt/usb_storage");*/
 			String extension = ".apk";
 
 			mAllFileArray = new ArrayList<String>();
 			getFiles(mAllFileArray, IntMemory_Path, extension, true);
-			getFiles(mAllFileArray, SDCard_Path, extension, true);
-			getFiles(mAllFileArray, USB_Path, extension, true);
+			/*getFiles(mAllFileArray, SDCard_Path, extension, true);
+			getFiles(mAllFileArray, USB_Path, extension, true);*/
 
 			if( mAllFileArray.size() > 0 ){ 
 				Collections.sort(mAllFileArray, new ApkFileSort());
@@ -98,8 +102,8 @@ public class XActivity extends Activity {
 			SimpleAdapter mApkFileAdapter = new SimpleAdapter(XActivity.this,
 					list,
 					R.layout.apkfile_listitem,
-					new String[] { "icon", "title", "summary", "option"},
-					new int[] {R.id.icon, R.id.title, R.id.summary, R.id.option});
+					new String[] { "icon", "title", "summary", "option", "tag"},
+					new int[] {R.id.icon, R.id.title, R.id.summary, R.id.option,R.id.tag});
 			mInstalledAppListView.setAdapter(mApkFileAdapter);
 
 			mApkFileAdapter.setViewBinder(new ViewBinder(){
@@ -193,7 +197,12 @@ public class XActivity extends Activity {
 
 		PackageInfo pkgInfo;
 
-		for (String appfile : appFiles) {
+		packageNames = new String[appFiles.size()];
+		apkFiles = new String[appFiles.size()];
+		for (int i = 0; i < appFiles.size(); i++) {
+			String appfile = appFiles.get(i);
+			//}
+			//for (String appfile : appFiles) {
 			pkgInfo = pm.getPackageArchiveInfo(appfile,PackageManager.GET_ACTIVITIES);  
 			if (pkgInfo != null) {
 				ApplicationInfo appInfo = pkgInfo.applicationInfo;
@@ -209,6 +218,11 @@ public class XActivity extends Activity {
 				map.put("title", appInfo.loadLabel(pm));
 				map.put("summary", pkgInfo.versionName+"     "+length);
 				map.put("option", appfile);
+				map.put("tag", appInfo.packageName);
+
+				packageNames[i] = appInfo.packageName;
+				apkFiles[i] = appfile;
+
 				list.add(map);
 			}
 		}
@@ -232,16 +246,47 @@ public class XActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
+
+		if( null != apkFiles && apkFiles.length > 0){
+
+
+			switch (item.getItemId()) {
+			case R.id.action_install:
+				for (String file : apkFiles) {
+					Log.i("install", file);
+					Toast.makeText(this, "install: "+file, Toast.LENGTH_SHORT).show();
+					install(file);
+				}
+				break;
+			case R.id.action_open:
+				for (String pkg : packageNames) {
+					Log.i("open", pkg);
+					Toast.makeText(this, "open: "+pkg, Toast.LENGTH_SHORT).show();
+					start(pkg);
+				}
+				break;
+			case R.id.action_uninstall:
+				for (String pkg : packageNames) {
+					Log.i("uninstall", pkg);
+					Toast.makeText(this, "uninstall: "+pkg, Toast.LENGTH_SHORT).show();
+					uninstall(pkg);
+				}
+				break;
+			case R.id.action_delete:
+				for (String file : apkFiles) {
+					Log.i("delete", file);
+					Toast.makeText(this, "delete: "+file, Toast.LENGTH_SHORT).show();
+					delete(file);
+				}
+				break;
+
+			default:
+				break;
+			}
 		}
 		return super.onOptionsItemSelected(item);
 	}
-	
+
 	public void start(String packageName){
 		Intent LaunchIntent = pm.getLaunchIntentForPackage(packageName);
 		if( null != LaunchIntent){
@@ -251,12 +296,31 @@ public class XActivity extends Activity {
 			Log.e("Intent", "can_not_open_apk Intent is null!");
 		}
 	}
-	
+
+	public void install(String file) {
+		try {
+			Intent intent = new Intent(Intent.ACTION_VIEW);
+			intent.setDataAndType(Uri.fromFile(new File(file)), "application/vnd.android.package-archive");
+			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			startActivity(intent);
+		} catch (ActivityNotFoundException e) {
+			// TODO: handle exception
+		}
+	}
+
 	public void uninstall(String packageName){
 		Uri packageUri = Uri.parse("package:" + packageName);
 		Intent deleteIntent = new Intent();
 		deleteIntent.setAction(Intent.ACTION_DELETE);
 		deleteIntent.setData(packageUri);
 		startActivity(deleteIntent);
+	}
+
+	public void delete(String filepath){
+
+		File file=new File(filepath);
+		if(file.exists()){
+			file.delete();
+		}
 	}
 }

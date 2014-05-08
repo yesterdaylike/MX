@@ -3,6 +3,9 @@
 
     <string name="app_name">MX</string>
     <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_install">安装</string>
+    <string name="action_open">打开</string>
+    <string name="action_uninstall">卸载</string>
+    <string name="action_delete">删除</string>
 
 </resources>
