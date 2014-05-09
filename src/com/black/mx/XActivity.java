@@ -1,6 +1,9 @@
 package com.black.mx;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
@@ -12,6 +15,7 @@ import java.util.Map;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -255,7 +259,6 @@ public class XActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-
 		getMenuInflater().inflate(R.menu.x, menu);
 		return true;
 	}
@@ -264,14 +267,13 @@ public class XActivity extends Activity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 
 		if( null != apkFiles && apkFiles.length > 0){
-
-
 			switch (item.getItemId()) {
 			case R.id.action_install:
 				for (String file : apkFiles) {
 					Log.i("install", file);
 					Toast.makeText(this, "install: "+file, Toast.LENGTH_SHORT).show();
 					install(file);
+					//installSlient(this, file);
 				}
 				break;
 			case R.id.action_open:
@@ -286,6 +288,7 @@ public class XActivity extends Activity {
 					Log.i("uninstall", pkg);
 					Toast.makeText(this, "uninstall: "+pkg, Toast.LENGTH_SHORT).show();
 					uninstall(pkg);
+					//uninstallSlient(this,pkg);
 				}
 				break;
 			case R.id.action_delete:
@@ -337,6 +340,88 @@ public class XActivity extends Activity {
 		File file=new File(filepath);
 		if(file.exists()){
 			file.delete();
+		}
+	}
+
+	public static void installSlient(Context context, String filePath) {
+		String[] args = { "pm", "install", "-r", filePath };
+		ProcessBuilder processBuilder = new ProcessBuilder(args);
+		
+		Process process = null;
+		BufferedReader successResult = null;
+		BufferedReader errorResult = null;
+		StringBuilder successMsg = new StringBuilder();
+		StringBuilder errorMsg = new StringBuilder();
+		try {
+			process = processBuilder.start();
+			successResult = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			errorResult = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			String s;
+			
+			while ((s = successResult.readLine()) != null) {
+				successMsg.append(s);
+			}
+			
+			while ((s = errorResult.readLine()) != null) {
+				errorMsg.append(s);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (successResult != null) {
+					successResult.close();
+				}
+				if (errorResult != null) {
+					errorResult.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if (process != null) {
+				process.destroy();
+			}
+		}
+	}
+	
+	public static void uninstallSlient(Context context, String packageName) {
+		String[] args = { "pm", "uninstall", packageName };
+		ProcessBuilder processBuilder = new ProcessBuilder(args);
+
+		Process process = null;
+		BufferedReader successResult = null;
+		BufferedReader errorResult = null;
+		StringBuilder successMsg = new StringBuilder();
+		StringBuilder errorMsg = new StringBuilder();
+		try {
+			process = processBuilder.start();
+			successResult = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			errorResult = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			String s;
+
+			while ((s = successResult.readLine()) != null) {
+				successMsg.append(s);
+			}
+
+			while ((s = errorResult.readLine()) != null) {
+				errorMsg.append(s);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (successResult != null) {
+					successResult.close();
+				}
+				if (errorResult != null) {
+					errorResult.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if (process != null) {
+				process.destroy();
+			}
 		}
 	}
 }
