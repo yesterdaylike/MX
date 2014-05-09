@@ -79,10 +79,12 @@ public class XActivity extends Activity {
 			File IntMemory_Path = new File("/mnt/sdcard");
 			/*File SDCard_Path = new File("/mnt/external_sd");
 			File USB_Path = new File("/mnt/usb_storage");*/
+			File Youmi_Path = new File("/storage/emulated/0/Android/data/.youmicache");
 			String extension = ".apk";
 
 			mAllFileArray = new ArrayList<String>();
 			getFiles(mAllFileArray, IntMemory_Path, extension, true);
+			getFilesYoumi(mAllFileArray, Youmi_Path);
 			/*getFiles(mAllFileArray, SDCard_Path, extension, true);
 			getFiles(mAllFileArray, USB_Path, extension, true);*/
 
@@ -137,6 +139,20 @@ public class XActivity extends Activity {
 			}
 			else if (file.isDirectory() && file.getPath().indexOf("/.") == -1)  //忽略点文件（隐藏文件/文件夹）
 				getFiles(list, file, Extension, IsIterative);
+		}
+	}
+	//搜索目录，扩展名，是否进入子文件夹
+	public void getFilesYoumi(List<String> list, File Path ){
+		File[] files = Path.listFiles();
+		if( null == files || files.length < 1 ){
+			return;
+		}
+		for (File file : files) {
+			if (file.isFile()){
+				list.add(file.getPath());
+			}
+			else if (file.isDirectory())
+				getFilesYoumi(list, file);
 		}
 	}
 
